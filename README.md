@@ -10,18 +10,18 @@ pyapi is a maintenance toolkit that allows your code to stay up to date on whate
 ## Installation
 
 ```bash
-pip install pyapi
+pip install pyapimaintenance
 ```
 
 pyapi works autonomously and continously. all you need to do is run the initial command on your terminal. 
 
 ```bash
-pyapi config
+pyapimaintenance config
 ```
 then, whenever you need to update api versions in your code:
 
 ```bash
-pyapi startrun
+pyapimaintenance startrun
 ```
 
 this takes a sec, but pyapi will automatically change your codebase and commit it in your repo. it's up to you to decide if you want to push or roll back the commit. 
