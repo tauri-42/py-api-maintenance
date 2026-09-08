@@ -1,8 +1,8 @@
 import subprocess
 import os
-from scan import load_rules
-from transform import apply_transform_to_file
-from verify import VerificationRunner
+from src.scan import load_rules
+from src.transform import apply_transform_to_file
+from src.verify import VerificationRunner
 
 
 def run_pipeline(repo_path: str, rules_path: str):

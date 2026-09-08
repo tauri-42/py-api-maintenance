@@ -1,2 +1,6 @@
-libcst>=1.9.0
-PyYAML>=6.0.3
+libcst
+PyYAML
+click
+requests
+groq
+pytest-json-report

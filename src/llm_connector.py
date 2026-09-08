@@ -7,7 +7,7 @@ client = Groq(api_key=os.environ["GROQ_API_KEY"])
 SCHEMA_PROMPT = """You extract API breaking-change rules from a changelog.
 Output ONLY valid YAML matching this exact schema, nothing else:
 
-rules:
+rules:p
   - old_symbol: <method/function name that changed>
     shape: <one of: rename_passthrough, wrap_as_list_call>
     new_symbol: <new method/function name>
