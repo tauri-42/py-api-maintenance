@@ -1,9 +1,0 @@
-rules:
-  - old_symbol: append
-    shape: wrap_as_list_call
-    new_namespace: pd
-    new_symbol: concat
-
-  - old_symbol: ix
-    shape: rename_passthrough
-    new_symbol: iloc
