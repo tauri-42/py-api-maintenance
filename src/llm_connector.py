@@ -7,7 +7,7 @@ client = Groq(api_key=os.environ["GROQ_API_KEY"])
 SCHEMA_PROMPT = """You extract API breaking-change rules from a changelog.
 Output ONLY valid YAML matching this exact schema, nothing else:
 
-rules:p
+rules:
   - old_symbol: <method/function name that changed>
     shape: <one of: rename_passthrough, wrap_as_list_call>
     new_symbol: <new method/function name>
@@ -18,7 +18,7 @@ If a change doesn't fit either shape, omit it entirely - do not guess.
 
 def extract_rules_from_changelog(changelog_text: str) -> str:
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",  # check console.groq.com/docs/models - Groq deprecates models occasionally
+        model="llama-3.3-70b-versatile",  
         messages=[
             {"role": "system", "content": SCHEMA_PROMPT},
             {"role": "user", "content": changelog_text},
@@ -36,4 +36,3 @@ if __name__ == "__main__":
     with open("proposed_rules.yaml", "w") as f:
         f.write(raw_output)
 
-    print("Wrote proposed_rules.yaml — review before merging into rules.yaml")

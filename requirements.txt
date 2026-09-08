@@ -4,3 +4,4 @@ click
 requests
 groq
 pytest-json-report
+click

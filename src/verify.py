@@ -1,4 +1,3 @@
-# verify.py
 import os
 import subprocess
 import json
@@ -9,9 +8,8 @@ class VerificationRunner:
     def __init__(self, repo_path: str, changed_files: list[str]):
         self.repo_path = repo_path
         self.changed_files = changed_files
-        self.confidence = None   # "high" or "low", set once run() completes
-        self.result = {}         # tier-specific findings
-
+        self.confidence = None
+        self.result = {}
 
     def has_test_suite(self) -> bool:
         tests_dir = os.path.join(self.repo_path, "tests")
@@ -31,22 +29,33 @@ class VerificationRunner:
             self._run_syntax_and_import_checks()
         return self.result
 
-
-    def _run_pytest(self) -> dict:
-        subprocess.run(
-            ["pytest", "--json-report", "--json-report-file=/tmp/report.json", "-q"],
-            cwd=self.repo_path, capture_output=True,
+    def _run_pytest(self) -> dict | None:
+        report_path = os.path.join(self.repo_path, ".pyapimaintenance_pytest_report.json")
+        proc = subprocess.run(
+            ["pytest", "--json-report", f"--json-report-file={report_path}", "-q"],
+            cwd=self.repo_path, capture_output=True, text=True,
         )
-        with open("/tmp/report.json") as f:
+        if not os.path.exists(report_path):
+            self.result.setdefault("warnings", []).append(
+                f"pytest did not produce a report (returncode={proc.returncode}): "
+                f"{proc.stderr.strip()[-500:]}"
+            )
+            return None
+        with open(report_path) as f:
             report = json.load(f)
+        os.remove(report_path)
         return {t["nodeid"]: t["outcome"] for t in report["tests"]}
 
     def _run_test_diff(self):
         subprocess.run(["git", "stash"], cwd=self.repo_path)
         before = self._run_pytest()
-
         subprocess.run(["git", "stash", "pop"], cwd=self.repo_path)
         after = self._run_pytest()
+
+        if before is None or after is None:
+            self.confidence = "low"
+            self._run_syntax_and_import_checks()
+            return
 
         self.result["new_failures"] = [
             t for t, o in after.items()
@@ -55,7 +64,6 @@ class VerificationRunner:
         self.result["pre_existing_failures"] = [
             t for t, o in before.items() if o == "failed"
         ]
-
 
     def _run_syntax_and_import_checks(self):
         syntax_failures = []
@@ -82,7 +90,6 @@ class VerificationRunner:
         rel = os.path.relpath(filepath, self.repo_path)
         return rel.replace(os.sep, ".").removesuffix(".py")
 
-
     def passed(self) -> bool:
         if self.confidence == "high":
             return len(self.result.get("new_failures", [])) == 0
@@ -90,6 +97,8 @@ class VerificationRunner:
 
     def report(self) -> str:
         lines = [f"Verification confidence: {self.confidence.upper()}"]
+        for w in self.result.get("warnings", []):
+            lines.append(f"WARNING: {w}")
         if self.confidence == "high":
             lines.append(f"New failures: {self.result['new_failures']}")
             lines.append(f"Pre-existing failures (ignored): {self.result['pre_existing_failures']}")
@@ -99,10 +108,3 @@ class VerificationRunner:
             lines.append(f"Import failures: {self.result['import_failures']}")
         lines.append(f"PASSED: {self.passed()}")
         return "\n".join(lines)
-
-
-if __name__ == "__main__":
-    changed_files = ["target_repos/some_repo/some_file.py"]  # pass real list from transform.py's output
-    runner = VerificationRunner("target_repos/some_repo", changed_files)
-    runner.run()
-    print(runner.report())
