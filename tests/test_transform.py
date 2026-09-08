@@ -4,7 +4,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.transform import load_rules, apply_transform_to_file  # noqa: E402
+from pyapimaintenance.transform import load_rules, apply_transform_to_file  # noqa: E402
 
 RULES_PATH = os.path.join(os.path.dirname(__file__), "fixture_rules.yaml")
 

@@ -2,8 +2,8 @@ import re
 import json
 import urllib.request
 
-from src.llm_connector import extract_rules_from_changelog
-from src.rules_store import load_state, save_state, write_rules
+from pyapimaintenance.llm_connector import extract_rules_from_changelog
+from pyapimaintenance.rules_store import load_state, save_state, write_rules
 
 
 def parse_requirements(path: str) -> list[tuple[str, str | None]]:

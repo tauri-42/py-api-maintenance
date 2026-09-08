@@ -1,7 +1,7 @@
 import subprocess
 import os
-from src.transform import apply_transform_to_file
-from src.verify import VerificationRunner
+from pyapimaintenance.transform import apply_transform_to_file
+from pyapimaintenance.verify import VerificationRunner
 
 
 def run_pipeline(repo_path: str, rules: dict):

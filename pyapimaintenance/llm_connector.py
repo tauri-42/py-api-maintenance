@@ -2,7 +2,7 @@ import os
 from groq import Groq
 import yaml
 
-client = Groq(api_key=os.environ["GROQ_API_KEY"])
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 SCHEMA_PROMPT = """You extract API breaking-change rules from a changelog.
 Output ONLY valid YAML matching this exact schema, nothing else:

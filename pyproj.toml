@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyapimaintenance"
+version = "0.1.0"
+description = "Autonomously keeps your codebase in sync with breaking API changes in your dependencies."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "libcst",
+    "PyYAML",
+    "click",
+    "requests",
+    "groq",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-json-report"]
+
+[project.scripts]
+pyapimaintenance = "pyapimaintenance.cli:cli"
+
+[tool.setuptools.packages.find]
+include = ["pyapimaintenance*"]

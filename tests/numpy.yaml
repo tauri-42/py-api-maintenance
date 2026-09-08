@@ -1,0 +1,13 @@
+rules:
+  - old_symbol: reindex
+    shape: rename_passthrough
+    new_symbol: reindex_axis_safe
+    library_module: pandas
+    factories: [DataFrame, read_csv]
+
+  - old_symbol: append
+    shape: wrap_as_list_call
+    new_symbol: concat
+    new_namespace: pd
+    library_module: pandas
+    factories: [DataFrame, read_csv]

@@ -2,11 +2,11 @@ import json
 import os
 import click
 
-from src.transform import apply_transform_to_file
-from src.verify import VerificationRunner
-from src.extract import update_rules_for_repo, format_report
-from src.rules_store import load_all_rules
-from src.pipeline import run_pipeline
+from pyapimaintenance.transform import apply_transform_to_file
+from pyapimaintenance.verify import VerificationRunner
+from pyapimaintenance.extract import update_rules_for_repo, format_report
+from pyapimaintenance.rules_store import load_all_rules
+from pyapimaintenance.pipeline import run_pipeline
 
 MANIFEST_PATH = ".pyapimaintenance_last_run.json"
 
