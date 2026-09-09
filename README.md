@@ -1,4 +1,4 @@
-# Overview
+# pyapimaintenance
 
 pyapimaintenance is a maintenance toolkit that allows your code to stay up to date on whatever python libs/apis you want automatically. it saves updates as a commit, so all you need to do is review and push. pyapi handles the update and hands you a clean commit to review!!!! :>
 
@@ -7,7 +7,7 @@ pyapimaintenance is a maintenance toolkit that allows your code to stay up to da
 - llm necessary (only for checking changelogs)
 
 
-## Installation
+## install
 to run this, you need a groq api key. groq is completely free and it takes like 1 min to set up: https://console.groq.com/home 
 
 inital pip install:
@@ -16,17 +16,25 @@ inital pip install:
 pip install pyapimaintenance
 ```
 
-pyapi works autonomously and continously. all you need to do is run the initial command on your terminal. 
+
+
+## usage
 
 ```bash
-pyapimaintenance config
-```
-then, whenever you need to update api versions in your code:
+export GROQ_API_KEY=...     
+pyapimaintenance config      
+pyapimaintenance startrun  
 
-```bash
-pyapimaintenance startrun
-```
+Review the `auto-migration` branch before pushing or merging - `pyapimaintenance` never pushes on your behalf.
 
-this takes a sec, but pyapi will automatically change your codebase and commit it in your repo. it's up to you to decide if you want to push or roll back the commit. 
+## how it works
 
-hope this makes everyones lives a little easier!!! :)
+- `config` reads your `requirements.txt`, checks each library's latest PyPI version, and for anything newer,
+  pulls the changelog and asks an LLM to propose migration rules (stored in `rules/<library>/rules.yaml`).
+
+- `startrun` applies every rule under `rules/` across your repo, runs your tests to verify nothing broke, and commits the result on a separate branch!!!
+
+
+See `.github/workflows/nightly-migration.yml.example` for a template to automate this on a schedule.
+
+hope this is helpful for everyone~!!!!
