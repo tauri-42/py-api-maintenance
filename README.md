@@ -21,9 +21,19 @@ pip install pyapimaintenance
 ## usage
 
 ```bash
-export GROQ_API_KEY=...     
-pyapimaintenance config      
-pyapimaintenance startrun  
+export GROQ_API_KEY=...
+```
+first, run config
+
+```bash
+pyapimaintenance config
+```
+then, for the actual ci cycle, run this:
+
+
+```bash   
+pyapimaintenance startrun
+```
 
 Review the `auto-migration` branch before pushing or merging - `pyapimaintenance` never pushes on your behalf.
 
