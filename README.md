@@ -1,13 +1,16 @@
 # Overview
 
-pyapi is a maintenance toolkit that allows your code to stay up to date on whatever python libs/apis you want automatically. it saves updates as a commit, so all you need to do is review and push. pyapi handles the update and hands you a clean commit to review!!!! :>
+pyapimaintenance is a maintenance toolkit that allows your code to stay up to date on whatever python libs/apis you want automatically. it saves updates as a commit, so all you need to do is review and push. pyapi handles the update and hands you a clean commit to review!!!! :>
 
 - pure python, no dependencies
 - can configure most* libraries and apis
-- llm is inside (only for checking changelogs)
+- llm necessary (only for checking changelogs)
 
 
 ## Installation
+to run this, you need a groq api key. groq is completely free and it takes like 1 min to set up: https://console.groq.com/home 
+
+inital pip install:
 
 ```bash
 pip install pyapimaintenance
