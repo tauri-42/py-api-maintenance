@@ -35,7 +35,6 @@ then, for the actual ci cycle, run this:
 pyapimaintenance startrun
 ```
 
-Review the `auto-migration` branch before pushing or merging - `pyapimaintenance` never pushes on your behalf.
 
 ## how it works
 
