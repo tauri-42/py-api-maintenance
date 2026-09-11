@@ -39,8 +39,7 @@ pyapimaintenance update
 
 ## how it works
 
-- `config` reads your `requirements.txt`, checks each library's latest PyPI version, and for anything newer,
-  pulls the changelog and asks an LLM to propose migration rules (stored in `rules/<library>/rules.yaml`).
+- `config` reads your `requirements.txt`, checks the changelog and asks an agent to develop some rules...
 
 - `startrun` applies every rule under `rules/` across your repo, runs your tests to verify nothing broke, and commits the result on a separate branch!!!
 
