@@ -1,6 +1,5 @@
 libcst
 PyYAML
-click
 requests
 groq
 pytest-json-report

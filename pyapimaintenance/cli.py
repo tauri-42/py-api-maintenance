@@ -1,8 +1,10 @@
 import json
 import os
 import click
+import yaml
 
-from pyapimaintenance.transform import apply_transform_to_file
+from pyapimaintenance.apply import walk_and_apply, print_review
+from pyapimaintenance.scan import scan_repo
 from pyapimaintenance.verify import VerificationRunner
 from pyapimaintenance.extract import update_rules_for_repo, format_report
 from pyapimaintenance.rules_store import load_all_rules
@@ -28,12 +30,11 @@ def config(repo, requirements):
 @cli.command()
 @click.option("--repo", default=".")
 def startrun(repo):
-    rules = load_all_rules(os.path.join(repo, "rules") if repo != "." else "rules")
+    rules = _load_rules(repo, None)
     if not rules:
         click.echo("run pyapimaintenance config first.")
         return
     run_pipeline(repo, rules)
-
 
 
 @cli.command()
@@ -41,36 +42,48 @@ def startrun(repo):
 @click.option("--library", default=None, help="Limit to one library's rules "
               "(defaults to every rule under rules/).")
 def scan(repo, library):
-    rules = load_all_rules() if library is None else _rules_for_one(library)
+    rules = _load_rules(repo, library)
+    if not rules:
+        click.echo("No rules found - run `pyapimaintenance config` first.")
+        return
+
     click.echo(f"scanning {repo} ({'all libraries' if library is None else library})...")
-    # ...call your existing scan loop, pass rules and repo...
+    matches = scan_repo(repo, rules)
+
+    if not matches:
+        click.echo("No matches found.")
+        return
+
+    for match in matches:
+        click.echo(
+            f"{match['filepath']}:{match['line']} -> {match['rule']['old_symbol']} "
+            f"[{match['confidence']}] {match['reason']}"
+        )
+
+    high = sum(1 for m in matches if m["confidence"] == "high")
+    click.echo(
+        f"\n{len(matches)} match(es) found "
+        f"({high} high-confidence, {len(matches) - high} low-confidence)."
+    )
 
 
 @cli.command()
 @click.option("--repo", default=".")
 @click.option("--library", default=None)
 def fix(repo, library):
-    rules = load_all_rules() if library is None else _rules_for_one(library)
-    changed = []
-    all_review = []
-    for dirpath, _, filenames in os.walk(repo):
-        for filename in filenames:
-            if filename.endswith(".py"):
-                filepath = os.path.join(dirpath, filename)
-                count, needs_review = apply_transform_to_file(filepath, rules)
-                if count:
-                    changed.append(filepath)
-                all_review.extend(needs_review)
+    rules = _load_rules(repo, library)
+    if not rules:
+        click.echo("No rules found - run `pyapimaintenance config` first.")
+        return
+
+    changed, all_review = walk_and_apply(repo, rules)
 
     manifest_path = os.path.join(repo, MANIFEST_PATH)
     with open(manifest_path, "w") as f:
         json.dump({"changed_files": changed}, f, indent=2)
 
     click.echo(f"Fixed {len(changed)} file(s). Manifest written to {manifest_path}")
-    if all_review:
-        click.echo(f"{len(all_review)} low-confidence match(es) skipped - review manually:")
-        for item in all_review:
-            click.echo(f"  {item['filepath']}: `{item['code']}` ({item['reason']})")
+    print_review(click.echo, all_review)
 
 
 @cli.command()
@@ -98,11 +111,26 @@ def verify(repo, files):
     click.echo(runner.report())
 
 
-def _rules_for_one(library: str) -> dict:
-    import yaml
-    with open(os.path.join("rules", library, "rules.yaml")) as f:
+def _load_rules(repo: str, library: str | None) -> dict[str, list[dict]]:
+    """Single place that resolves `--repo` -> rules dir for every command.
+
+    fix/scan used to build this path themselves and get it wrong (looking in
+    ./rules relative to the CWD instead of under --repo); startrun did it
+    correctly. Now everyone goes through here.
+    """
+    rules_dir = os.path.join(repo, "rules") if repo != "." else "rules"
+
+    if library is None:
+        return load_all_rules(rules_dir)
+
+    path = os.path.join(rules_dir, library, "rules.yaml")
+    with open(path) as f:
         data = yaml.safe_load(f)
-    return {rule["old_symbol"]: rule for rule in data["rules"]}
+
+    rules: dict[str, list[dict]] = {}
+    for rule in data["rules"]:
+        rules.setdefault(rule["old_symbol"], []).append(rule)
+    return rules
 
 
 if __name__ == "__main__":

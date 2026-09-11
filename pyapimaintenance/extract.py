@@ -2,7 +2,7 @@ import re
 import json
 import urllib.request
 
-from pyapimaintenance.llm_connector import extract_rules_from_changelog
+from pyapimaintenance.llm_connector import extract_rules_from_changelog, validate_rules_yaml
 from pyapimaintenance.rules_store import load_state, save_state, write_rules
 
 
@@ -111,6 +111,16 @@ def update_rules_for_repo(repo_path: str, requirements_filename: str = "requirem
             continue
 
         raw_output = extract_rules_from_changelog(changelog_text)
+
+        try:
+            validate_rules_yaml(raw_output)
+        except ValueError as e:
+            report["errors"].append({
+                "library": name,
+                "error": f"LLM produced invalid rules, skipped writing rules.yaml: {e}",
+            })
+            continue
+
         out_path = write_rules(name, raw_output)
         state[name] = current_version
         report["updated"].append({

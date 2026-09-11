@@ -47,9 +47,45 @@ class VerificationRunner:
         return {t["nodeid"]: t["outcome"] for t in report["tests"]}
 
     def _run_test_diff(self):
-        subprocess.run(["git", "stash"], cwd=self.repo_path)
+        stash = subprocess.run(
+            ["git", "stash", "--include-untracked"],
+            cwd=self.repo_path, capture_output=True, text=True,
+        )
+        if stash.returncode != 0:
+            self.result.setdefault("warnings", []).append(
+                f"git stash failed, falling back to syntax+import checks only: "
+                f"{stash.stderr.strip()}"
+            )
+            self.confidence = "low"
+            self._run_syntax_and_import_checks()
+            return
+
+        # git prints this exact message when there was nothing to stash -
+        # in that case there's no matching pop to do.
+        stashed_something = "No local changes to save" not in stash.stdout
+
         before = self._run_pytest()
-        subprocess.run(["git", "stash", "pop"], cwd=self.repo_path)
+
+        if stashed_something:
+            pop = subprocess.run(
+                ["git", "stash", "pop"],
+                cwd=self.repo_path, capture_output=True, text=True,
+            )
+            if pop.returncode != 0:
+                # Do NOT silently keep going here - the working tree is now
+                # in an unknown state (still stashed, or a conflicted pop).
+                # Running "after" tests against that would be meaningless.
+                self.result.setdefault("warnings", []).append(
+                    "git stash pop failed after running the 'before' tests - the "
+                    f"working tree may still be stashed. Run `git stash list` / "
+                    f"`git stash pop` manually in {self.repo_path}. "
+                    f"stderr: {pop.stderr.strip()}"
+                )
+                self.confidence = "low"
+                self.result["syntax_failures"] = []
+                self.result["import_failures"] = []
+                return
+
         after = self._run_pytest()
 
         if before is None or after is None:
@@ -100,11 +136,11 @@ class VerificationRunner:
         for w in self.result.get("warnings", []):
             lines.append(f"WARNING: {w}")
         if self.confidence == "high":
-            lines.append(f"New failures: {self.result['new_failures']}")
-            lines.append(f"Pre-existing failures (ignored): {self.result['pre_existing_failures']}")
+            lines.append(f"New failures: {self.result.get('new_failures', [])}")
+            lines.append(f"Pre-existing failures (ignored): {self.result.get('pre_existing_failures', [])}")
         else:
             lines.append("WARNING: no test suite found, verified via syntax+import only.")
-            lines.append(f"Syntax failures: {self.result['syntax_failures']}")
-            lines.append(f"Import failures: {self.result['import_failures']}")
+            lines.append(f"Syntax failures: {self.result.get('syntax_failures', [])}")
+            lines.append(f"Import failures: {self.result.get('import_failures', [])}")
         lines.append(f"PASSED: {self.passed()}")
         return "\n".join(lines)
